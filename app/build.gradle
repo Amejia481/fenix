@@ -291,6 +291,8 @@ dependencies {
     implementation Deps.mozilla_ui_icons
 
     implementation Deps.mozilla_lib_crash
+    implementation 'androidx.appcompat:appcompat:1.0.0-beta01'
+    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
     debugImplementation Deps.leakcanary
     releaseImplementation Deps.leakcanary_noop
 
@@ -333,4 +335,4 @@ if (project.hasProperty("raptor")) {
 
 // Normally this should use the same version as the glean dependency. But since we are currently using AC snapshots we
 // can't reference a git tag with a specific version here. So we are just using "master" and hoping for the best.
-apply from: 'https://github.com/mozilla-mobile/android-components/raw/master/components/service/glean/scripts/sdk_generator.gradle'
+//apply from: 'https://github.com/mozilla-mobile/android-components/raw/master/components/service/glean/scripts/sdk_generator.gradle'

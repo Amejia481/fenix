@@ -58,6 +58,7 @@ import org.mozilla.fenix.ext.share
 import org.mozilla.fenix.mvi.ActionBusFactory
 import org.mozilla.fenix.mvi.getAutoDisposeObservable
 import org.mozilla.fenix.quickactionsheet.QuickActionSheet
+import org.mozilla.fenix.settings.QuickSettingsSheet
 import org.mozilla.fenix.utils.Settings
 
 class BrowserFragment : Fragment(), BackHandler {
@@ -73,6 +74,7 @@ class BrowserFragment : Fragment(), BackHandler {
     private val fullScreenFeature = ViewBoundFeatureWrapper<FullScreenFeature>()
     private val thumbnailsFeature = ViewBoundFeatureWrapper<ThumbnailsFeature>()
     private val customTabsIntegration = ViewBoundFeatureWrapper<CustomTabsIntegration>()
+    private var quickSettingsSheet : QuickSettingsSheet? = null
 
     var sessionId: String? = null
 
@@ -95,8 +97,12 @@ class BrowserFragment : Fragment(), BackHandler {
         )
 
         toolbarComponent.uiView.view.apply {
-            setBackgroundColor(ContextCompat.getColor(view.context,
-                DefaultThemeManager.resolveAttribute(R.attr.browserToolbarBackground, context)))
+            setBackgroundColor(
+                ContextCompat.getColor(
+                    view.context,
+                    DefaultThemeManager.resolveAttribute(R.attr.browserToolbarBackground, context)
+                )
+            )
 
             (layoutParams as CoordinatorLayout.LayoutParams).apply {
                 // Stop toolbar from collapsing if TalkBack is enabled
@@ -132,10 +138,13 @@ class BrowserFragment : Fragment(), BackHandler {
                 ContextMenuCandidate.defaultCandidates(
                     requireContext(),
                     requireComponents.useCases.tabsUseCases,
-                    view),
-                view.engineView),
+                    view
+                ),
+                view.engineView
+            ),
             owner = this,
-            view = view)
+            view = view
+        )
 
         downloadsFeature.set(
             feature = DownloadsFeature(
@@ -146,7 +155,8 @@ class BrowserFragment : Fragment(), BackHandler {
                     requestPermissions(permissions, REQUEST_CODE_DOWNLOAD_PERMISSIONS)
                 }),
             owner = this,
-            view = view)
+            view = view
+        )
 
         promptsFeature.set(
             feature = PromptFeature(
@@ -157,28 +167,33 @@ class BrowserFragment : Fragment(), BackHandler {
                     requestPermissions(permissions, REQUEST_CODE_PROMPT_PERMISSIONS)
                 }),
             owner = this,
-            view = view)
+            view = view
+        )
 
         sessionFeature.set(
             feature = SessionFeature(
                 sessionManager,
                 SessionUseCases(sessionManager),
                 view.engineView,
-                sessionId),
+                sessionId
+            ),
             owner = this,
-            view = view)
+            view = view
+        )
 
         findInPageIntegration.set(
             feature = FindInPageIntegration(
                 requireComponents.core.sessionManager, view.findInPageView, view.engineView
             ),
             owner = this,
-            view = view)
+            view = view
+        )
 
         toolbarIntegration.set(
             feature = (toolbarComponent.uiView as ToolbarUIView).toolbarIntegration,
             owner = this,
-            view = view)
+            view = view
+        )
 
         sitePermissionsFeature.set(
             feature = SitePermissionsFeature(
@@ -235,6 +250,13 @@ class BrowserFragment : Fragment(), BackHandler {
                 view = view
             )
         }
+        toolbarComponent.getView().setOnSiteSecurityClickedListener {
+            val session = requireContext().components.core.sessionManager.findSessionById(sessionId!!)
+            quickSettingsSheet = QuickSettingsSheet.newInstance(session!!.url, session.securityInfo.secure) { permissions ->
+                requestPermissions(permissions, REQUEST_CODE_QUICK_SETTINGS_PERMISSIONS)
+            }
+            quickSettingsSheet?.show(requireFragmentManager(), "QuickSettingsSheet")
+        }
     }
 
     override fun onResume() {
@@ -252,7 +274,8 @@ class BrowserFragment : Fragment(), BackHandler {
                             .findNavController(toolbarComponent.getView())
                             .navigate(
                                 BrowserFragmentDirections.actionBrowserFragmentToSearchFragment(
-                                    requireComponents.core.sessionManager.selectedSession?.id)
+                                    requireComponents.core.sessionManager.selectedSession?.id
+                                )
                             )
 
                         requireComponents.analytics.metrics.track(
@@ -286,6 +309,10 @@ class BrowserFragment : Fragment(), BackHandler {
             REQUEST_CODE_APP_PERMISSIONS -> sitePermissionsFeature.withFeature {
                 it.onPermissionsResult(grantResults)
             }
+            REQUEST_CODE_QUICK_SETTINGS_PERMISSIONS -> quickSettingsSheet?.onPermissionsResult(
+                permissions,
+                grantResults
+            )
         }
     }
 
@@ -362,6 +389,7 @@ class BrowserFragment : Fragment(), BackHandler {
         private const val REQUEST_CODE_DOWNLOAD_PERMISSIONS = 1
         private const val REQUEST_CODE_PROMPT_PERMISSIONS = 2
         private const val REQUEST_CODE_APP_PERMISSIONS = 3
+        private const val REQUEST_CODE_QUICK_SETTINGS_PERMISSIONS = 4
         private const val TOOLBAR_HEIGHT = 56f
         private const val REPORT_SITE_ISSUE_URL = "https://webcompat.com/issues/new?url=%s&label=browser-fenix"
     }
