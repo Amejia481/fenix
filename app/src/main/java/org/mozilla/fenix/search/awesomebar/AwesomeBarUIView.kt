@@ -15,6 +15,7 @@ import io.reactivex.Observer
 import io.reactivex.functions.Consumer
 import mozilla.components.browser.awesomebar.BrowserAwesomeBar
 import mozilla.components.browser.search.SearchEngine
+import mozilla.components.browser.session.Session
 import mozilla.components.concept.engine.EngineSession
 import mozilla.components.feature.awesomebar.provider.BookmarksStorageSuggestionProvider
 import mozilla.components.feature.awesomebar.provider.ClipboardSuggestionProvider
@@ -23,6 +24,7 @@ import mozilla.components.feature.awesomebar.provider.SearchSuggestionProvider
 import mozilla.components.feature.awesomebar.provider.SessionSuggestionProvider
 import mozilla.components.feature.search.SearchUseCases
 import mozilla.components.feature.session.SessionUseCases
+import mozilla.components.feature.tabs.TabsUseCases
 import mozilla.components.support.ktx.android.view.hideKeyboard
 import org.mozilla.fenix.R
 import org.mozilla.fenix.ThemeManager
@@ -75,6 +77,12 @@ class AwesomeBarUIView(
         }
     }
 
+    private val selectTapUseCase = object : TabsUseCases.SelectTabUseCase {
+        override fun invoke(session: Session) {
+            actionEmitter.onNext(AwesomeBarAction.URLTapped(session.url))
+        }
+    }
+
     private val searchUseCase = object : SearchUseCases.SearchUseCase {
         override fun invoke(searchTerms: String, searchEngine: SearchEngine?) {
             actionEmitter.onNext(AwesomeBarAction.SearchTermsTapped(searchTerms, searchEngine))
@@ -111,8 +119,9 @@ class AwesomeBarUIView(
             sessionProvider =
                 SessionSuggestionProvider(
                     components.core.sessionManager,
-                    components.useCases.tabsUseCases.selectTab,
-                    components.core.icons
+                    selectTapUseCase,
+                    components.core.icons,
+                    excludeSelectedSession = true
                 )
 
             historyStorageProvider =
