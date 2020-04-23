@@ -19,6 +19,7 @@ import mozilla.components.feature.sitepermissions.SitePermissions
 import org.mozilla.fenix.R
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.getPreferenceKey
+import org.mozilla.fenix.ext.requireComponents
 import org.mozilla.fenix.ext.showToolbar
 import org.mozilla.fenix.settings.PhoneFeature
 import org.mozilla.fenix.settings.PhoneFeature.CAMERA
@@ -100,6 +101,7 @@ class SitePermissionsDetailsExceptionsFragment : PreferenceFragmentCompat() {
             requireContext().components.core.permissionStorage.deleteSitePermissions(sitePermissions)
             withContext(Main) {
                 requireView().findNavController().popBackStack()
+                requireComponents.tryReloadTabBy(sitePermissions.origin)
             }
         }
     }
