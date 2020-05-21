@@ -163,7 +163,9 @@ class BrowserToolbarView(
                 elevation = TOOLBAR_ELEVATION.dpToFloat(resources.displayMetrics)
 
                 if (!isCustomTabSession) {
-                    display.setUrlBackground(getDrawable(R.drawable.search_url_background))
+                    val drawable = getDrawable(R.drawable.search_url_background)
+                    drawable?.alpha = 127
+                    display.setUrlBackground(drawable)
                 }
 
                 display.onUrlClicked = {
